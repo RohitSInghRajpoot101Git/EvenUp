@@ -1,5 +1,4 @@
-this is a very initial draft consider it as a v0.0.-1
-and claude wrote it sooooo......🤞
+npm install -g react-native-cli
 
 # Evenup — Mobile Client
 
