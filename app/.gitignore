@@ -1,0 +1,16 @@
+# React Native
+node_modules/
+*.log
+*.tmp
+*.lock
+
+# OS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+
+# Build
+android/app/build/
+ios/Pods/
