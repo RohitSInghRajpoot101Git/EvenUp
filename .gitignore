@@ -1,2 +1,43 @@
+# General
 .DS_Store
+*.log
+*.tmp
+*.lock
+
+# IDEs and Editors
+.idea/
 .vscode/
+*.sublime-workspace
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+venv/
+.env
+*.db
+*.sqlite3
+
+# Node.js
+node_modules/
+*.log
+*.tmp
+*.lock
+
+# React Native
+android/app/build/
+ios/Pods/
+
+# Build
+build/
+dist/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Git
+*.orig
+*.rej
+*.patch
