@@ -42,3 +42,7 @@ Thumbs.db
 *.rej
 *.patch
 .gitignore
+
+
+__pycache__/
+*.pyc
