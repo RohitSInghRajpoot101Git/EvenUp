@@ -8,8 +8,9 @@ Group expense tracker. Split bills, track debts, settle up.
 
 ```
 EvenUp/
-├── app/                    # React Native mobile client (Expo)
+├── mobile-app/             # React Native mobile client (Expo)
 ├── Backend/                # FastAPI REST API
+├── web-app/ 
 └── README.md
 ```
 
