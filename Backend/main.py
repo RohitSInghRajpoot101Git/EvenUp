@@ -22,8 +22,9 @@ FAVICON_URL = "/static/EvenUp-white.svg"
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        "http://localhost:3000",
         "https://localhost:3000",
-        "https://theevenup.vercel.app",
+        "https://useevenup.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
