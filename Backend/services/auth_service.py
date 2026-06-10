@@ -165,7 +165,7 @@ async def request_password_reset(email: str, db: AsyncSession):
 
     if user.auth_provider != AuthProvider.LOCAL:
         raise HTTPException(status_code=400, detail="This account uses Google Sign-In")
-
+    
     raw_token = secrets.token_urlsafe(32)
     token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
     expire_at = datetime.now(timezone.utc) + timedelta(minutes=10)
@@ -189,13 +189,22 @@ async def reset_password(token: str, new_password: str, db: AsyncSession):
     if not reset_record:
         raise HTTPException(status_code=400, detail="Invalid or expired token")
 
+    if reset_record.used:
+        raise HTTPException(status_code=400, detail="Token already used")
+    
+    if reset_record.expire_at < datetime.now(timezone.utc):
+        await repo_auth.mark_token_as_used(reset_record)
+        raise HTTPException(status_code=400, detail="Token expired")
+    
     repo = UserRepository(db)
     user = await repo.get_user_by_id(reset_record.user_id)
     user.password_hash = hash_password(new_password)
     await repo.update_user(user)
 
     await repo_auth.mark_token_as_used(reset_record)
-
+    
+    await repo_auth.delete_token(reset_record.user_id)
+    
     return {"message": "Password reset successfully"}
 
 
