@@ -1,7 +1,9 @@
 import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
+import resend
 from fastapi import HTTPException  # type: ignore
 from jose import JWTError, jwt  # type: ignore
 from passlib.context import CryptContext  # type: ignore
@@ -11,6 +13,8 @@ from core.config import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     ALGORITHM,
     REFRESH_TOKEN_EXPIRE_DAYS,
+    RESEND_API_KEY,
+    RESEND_FROM,
     SECRET_KEY,
 )
 from models.user import AuthProvider, User
@@ -20,6 +24,8 @@ from schemas.user import TokenResponse, UserCreate, UserLogin
 from utils.user_utils import generate_user_code
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+
+resend.api_key = RESEND_API_KEY
 
 
 def hash_password(password: str) -> str:
@@ -151,8 +157,13 @@ async def request_password_reset(email: str, db: AsyncSession):
     repo_auth = AuthRepository(db)
     user = await repo.get_user_by_email(email)
 
-    if not user or user.auth_provider != AuthProvider.LOCAL:
-        return {"message": "If that email exists, a reset link has been sent"}
+    if not user:
+        raise HTTPException(
+            status_code=404, detail="No account found with that email address"
+        )
+
+    if user.auth_provider != AuthProvider.LOCAL:
+        raise HTTPException(status_code=400, detail="This account uses Google Sign-In")
 
     raw_token = secrets.token_urlsafe(32)
     token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
@@ -160,9 +171,12 @@ async def request_password_reset(email: str, db: AsyncSession):
 
     await repo_auth.save_reset_token(user.id, token_hash, expire_at)
 
-    await send_reset_email(user.email, raw_token)
+    email_sent = await send_reset_email(user.email, raw_token)
 
-    return {"message": "If that email exists, a reset link has been sent"}
+    if not email_sent:
+        raise HTTPException(status_code=500, detail="Failed to send reset email")
+
+    return {"success": True, "message": "Reset email sent"}
 
 
 async def reset_password(token: str, new_password: str, db: AsyncSession):
@@ -185,4 +199,30 @@ async def reset_password(token: str, new_password: str, db: AsyncSession):
 
 
 async def send_reset_email(to_email: str, raw_token: str):
-    print("hello")
+    reset_url = f"{BACKEND_URL}/auth/reset-password?token={raw_token}"
+
+    html_content = Path("templates/email/password-reset-email.html").read_text(
+        encoding="utf-8"
+    )
+
+    html_content = html_content.replace(
+        "__RESET_URL__",
+        reset_url,
+    )
+
+    try:
+        resend.Emails.send(
+            {
+                "from": f"EvenUp <{RESEND_FROM}>",
+                "to": [to_email],
+                "subject": "Reset Your Password",
+                "html": html_content,
+            }
+        )
+        return True
+    except Exception as e:
+        print(f"[send_reset_email] failed for {to_email}: {e}")
+        return False
+
+
+# Created a delete token Function in user_repo and added a template for reset password in main.py
