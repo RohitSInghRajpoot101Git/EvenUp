@@ -9,10 +9,11 @@ from routes.debt_breakdown import router as debt_breakdown_router
 from routes.group_expenses import router as groups_expense_router
 from routes.group_member import router as group_member_router
 from routes.groups import router as groups_router
+from routes.personal_expenses import router as personal_expenses_router
 from routes.users import router as users_router
 
 app = FastAPI(
-    title="EvenUp API",
+    title="Evven API",
     description="API for Group and Personal Expense Management",
     version="0.0.1",
     docs_url=None,
@@ -25,7 +26,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "https://localhost:3000",
-        "https://useevenup.vercel.app",
+        "https://evven.xyz",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -39,7 +40,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 async def custom_swagger_ui():
     return get_swagger_ui_html(
         openapi_url=app.openapi_url,
-        title="EvenUp Docs",
+        title="Evven Docs",
         swagger_favicon_url=FAVICON_URL,
     )
 
@@ -48,7 +49,7 @@ async def custom_swagger_ui():
 async def redoc_html():
     return get_redoc_html(
         openapi_url=app.openapi_url,
-        title="EvenUp ReDoc",
+        title="Evven ReDoc",
         redoc_favicon_url=FAVICON_URL,
     )
 
@@ -58,6 +59,7 @@ app.include_router(users_router)
 app.include_router(groups_router)
 app.include_router(group_member_router)
 app.include_router(groups_expense_router)
+app.include_router(personal_expenses_router)
 app.include_router(debt_breakdown_router)
 
 
