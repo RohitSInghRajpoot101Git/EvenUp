@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession  # type: ignore
 from core.config import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     ALGORITHM,
+    BACKEND_URL,
     REFRESH_TOKEN_EXPIRE_DAYS,
     RESEND_API_KEY,
     RESEND_FROM,
