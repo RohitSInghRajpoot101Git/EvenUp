@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import select  # type: ignore
+from sqlalchemy import delete, select, update  # type: ignore
 from sqlalchemy.ext.asyncio import AsyncSession  # type: ignore
 
 from models.password_reset_token import PasswordResetToken
@@ -81,15 +81,20 @@ class AuthRepository:
         reset_record.used = True
         await self.session.commit()
 
-    async def delete_token(self, user_id: UUID) -> None:
-        # removed all used tokens for a user.
-        result = await self.session.execute(
-            select(PasswordResetToken).where(
-                PasswordResetToken.user_id == user_id,
-                PasswordResetToken.used.is_(True),
-            )
+    async def delete_token(self) -> None:
+        # removed all used tokens.
+        await self.session.execute(
+            delete(PasswordResetToken).where(PasswordResetToken.used.is_(True))
         )
+        await self.session.commit()
 
-        for record in result.scalars().all():
-            await self.session.delete(record)
+    async def mark_expired_tokens_as_used(self):
+        await self.session.execute(
+            update(PasswordResetToken)
+            .where(
+                PasswordResetToken.expire_at < datetime.now(timezone.utc),
+                PasswordResetToken.used.is_(False),
+            )
+            .values(used=True)
+        )
         await self.session.commit()

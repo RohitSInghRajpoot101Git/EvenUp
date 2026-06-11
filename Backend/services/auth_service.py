@@ -163,6 +163,8 @@ async def request_password_reset(email: str, db: AsyncSession):
             status_code=404, detail="No account found with that email address"
         )
 
+    await repo_auth.mark_expired_tokens_as_used()  # update old entries
+
     if user.auth_provider != AuthProvider.LOCAL:
         raise HTTPException(status_code=400, detail="This account uses Google Sign-In")
 
@@ -175,6 +177,7 @@ async def request_password_reset(email: str, db: AsyncSession):
     email_sent = await send_reset_email(user.email, raw_token)
 
     if not email_sent:
+        await repo_auth.delete_token(user.id)
         raise HTTPException(status_code=500, detail="Failed to send reset email")
 
     return {"success": True, "message": "Reset email sent"}
@@ -203,7 +206,7 @@ async def reset_password(token: str, new_password: str, db: AsyncSession):
 
     await repo_auth.mark_token_as_used(reset_record)
 
-    await repo_auth.delete_token(reset_record.user_id)
+    await repo_auth.delete_token()
 
     return {"message": "Password reset successfully"}
 
